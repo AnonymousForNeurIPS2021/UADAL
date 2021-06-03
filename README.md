@@ -22,7 +22,7 @@ python train.py --input-data <path_to_data> --alpha 10 --beta 20
 
 Our model achieves the following performance on Open-Set Domain Adaptation Setting :
 
-### [Image Classification on ImageNet](https://paperswithcode.com/sota/image-classification-on-imagenet)
+### [HOS Performances]
 
 | Model name         | Office-31 (ResNet-50) | Office-31 (VGGNet) | Office-Home (ResNet-50) | VisDA (ResNet-50) |
 | ------------------ |---------------- | -------------- |---------------- | -------------- |

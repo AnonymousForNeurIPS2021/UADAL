@@ -1,5 +1,5 @@
 import torch.optim as opt
-from models.basenet_v3 import *
+from models.basenet import *
 import torchvision.transforms as transforms
 import torch.optim as optim
 import numpy as np

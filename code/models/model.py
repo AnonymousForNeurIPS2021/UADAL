@@ -236,7 +236,7 @@ class UAGRL():
 
                     #########################################################################################################
 
-                    loss = 0.5 * loss_G + loss_cls_Es + loss_cls_Cs + loss_ent_Ctk + float(1/11)*loss_cls_Ctu
+                    loss = 0.5 * loss_G + loss_cls_Es + loss_cls_Cs + loss_ent_Ctk + 0.5*loss_cls_Ctu
                     loss.backward()
                     #########################################################################################################
                     self.opt_g.step()

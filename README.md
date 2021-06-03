@@ -4,13 +4,15 @@ This repository is the official implementation of Unknown-Aware Domain Adversari
 
 ## Requirements
 
+Dependency:
+
+python3.6
+
 To install requirements:
 
 ```setup
 pip install -r requirements.txt
 ```
-Dependency
-python3.6
 
 ## Training
 

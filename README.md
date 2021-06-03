@@ -22,9 +22,11 @@ python train.py --input-data <path_to_data> --alpha 10 --beta 20
 
 Our model achieves the following performance on Open-Set Domain Adaptation Setting :
 
-### [HOS Performances]
+### [Performances]
 
 | Model name         | Office-31 (ResNet-50) | Office-31 (VGGNet) | Office-Home (ResNet-50) | VisDA (ResNet-50) |
 | ------------------ |---------------- | -------------- |---------------- | -------------- |
 | UADAL  |     85%         |      95%       | 85%         |      95%       |
+
+# The metric is HOS.
 

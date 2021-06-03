@@ -58,7 +58,7 @@ Our model achieves the following performance on Open-Set Domain Adaptation Setti
 
 | Model name         | Office-31 (ResNet-50) | Office-31 (VGGNet) | Office-Home (ResNet-50) | VisDA (ResNet-50) |
 | ------------------ |---------------- | -------------- |---------------- | -------------- |
-| UADAL  |     85%         |      95%       | 85%         |      95%       |
+| UADAL  |     86.8%         |      86.5%       | 65.8%         |      68.6%       |
 
 - The metric is HOS.
 

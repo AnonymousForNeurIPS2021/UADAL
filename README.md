@@ -40,7 +40,7 @@ Datasets should have the following structures:
 │   │   ├── ...
 ```
 
-Please run python3.6 utils/list_office.py
+After downloading the datasets, please run python3.6 utils/list_office.py 
 
 ## Training
 

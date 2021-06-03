@@ -32,6 +32,12 @@ Datasets should have the following structures:
 │   │   ├── ...
 ```
 
+For downloading,
+
+Office-31: [Office-31][office31link]
+
+[office31link]: https://people.eecs.berkeley.edu/~jhoffman/domainadapt/#datasets_code "Go "
+
 
 ## Training
 

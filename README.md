@@ -14,6 +14,14 @@ pip install -r requirements.txt
 
 ## Dataset
 
+[Office-31][office31link], [Office-Home][officehomelink], [VisDA][visdalink]
+
+[office31link]: https://people.eecs.berkeley.edu/~jhoffman/domainadapt/#datasets_code "Go "
+
+[officehomelink]: https://www.hemanthdv.org/officeHomeDataset.html "Go "
+
+[visdalink]: http://ai.bu.edu/visda-2017/#download "Go "
+
 Datasets should have the following structures:
 
 ```bash
@@ -31,13 +39,6 @@ Datasets should have the following structures:
 │   ├── officehome
 │   │   ├── ...
 ```
-
-For downloading,
-
-Office-31: [Office-31][office31link]
-
-[office31link]: https://people.eecs.berkeley.edu/~jhoffman/domainadapt/#datasets_code "Go "
-
 
 ## Training
 

@@ -15,9 +15,9 @@ pip install -r requirements.txt
 ## Dataset
 
 Datasets should have the following structures:
---data --office --amazon
-                --dslr
-                --webcam
+--data --office --amazon \\
+                --dslr    \\
+                --webcam   \\
 
 ## Training
 

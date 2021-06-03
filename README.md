@@ -14,7 +14,7 @@ pip install -r requirements.txt
 
 ## Dataset
 
-[Office-31][office31link], [Office-Home][officehomelink], [VisDA][visdalink]
+Download [Office-31][office31link], [Office-Home][officehomelink], [VisDA][visdalink]
 
 [office31link]: https://people.eecs.berkeley.edu/~jhoffman/domainadapt/#datasets_code "Go "
 
@@ -39,6 +39,8 @@ Datasets should have the following structures:
 │   ├── officehome
 │   │   ├── ...
 ```
+
+Please run python3.6 utils/list_office.py
 
 ## Training
 

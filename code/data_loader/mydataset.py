@@ -104,69 +104,6 @@ class ImageFolder(data.Dataset):
         return len(self.imgs)
 
 
-
-class ImageFolder_ss(data.Dataset):
-    def __init__(self, image_list, transform, ss_classes, known_classes, target_transform=None, return_paths=False,
-                 loader=default_loader,train=False):
-
-        imgs, labels = make_dataset_nolist(image_list)
-        self.imgs = imgs
-        self.labels= labels
-        self.ss_classes = ss_classes
-        self.known_classes = known_classes
-        self.transform = transform
-        self.target_transform = target_transform
-        self.loader = loader
-        self.return_paths = return_paths
-        self.train = train
-    def __getitem__(self, index):
-        ss_transformation = np.random.randint(self.ss_classes)
-
-        path = self.imgs[index]
-        target = self.labels[index]
-        img = self.loader(path)
-
-        img = self.transform(img).numpy()
-        img = np.transpose(img, [1, 2, 0])
-            #print(type(img))
-        if ss_transformation == 0:
-            ss_data = img
-        if ss_transformation == 1:
-            ss_data = np.rot90(img, k=1)
-
-        if ss_transformation == 2:
-            ss_data = np.rot90(img, k=2)
-
-        if ss_transformation == 3:
-            ss_data = np.rot90(img, k=3)
-
-        img = np.transpose(img, [2, 0, 1])
-        ss_data = np.transpose(ss_data, [2, 0, 1])
-
-        img = torch.from_numpy(img.copy())
-        ss_data = torch.from_numpy(ss_data.copy())
-
-        if self.known_classes == 1:
-            ss_label = one_hot(self.ss_classes, ss_transformation)
-            label_ss_center = 0
-            label_object_center = 0
-        else:
-            ss_label = one_hot(self.ss_classes * self.known_classes, (self.ss_classes * target) + ss_transformation)
-            label_ss_center = (self.ss_classes * target) + ss_transformation
-            label_object_center = target
-
-
-        if self.target_transform is not None:
-            target = self.target_transform(target)
-        if self.return_paths:
-            return img, target, path, ss_data, ss_label, label_ss_center, label_object_center
-        else:
-            return img, target, ss_data, ss_label, label_ss_center, label_object_center
-
-    def __len__(self):
-        return len(self.imgs)
-
-
 def one_hot(n_class, index):
     tmp = np.zeros((n_class,), dtype=np.float32)
     tmp[index] = 1.0

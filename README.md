@@ -20,8 +20,11 @@ Datasets should have the following structures:
 ├── data
 │   ├── office
 │   │   ├── amazon
+│   │   |   ├── images
 │   │   ├── dslr
+│   │   |   ├── images
 │   │   ├── webcam
+│   │   |   ├── images
 │   ├── visda
 │   │   ├── train
 │   │   ├── validation

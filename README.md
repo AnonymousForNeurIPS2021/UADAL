@@ -9,6 +9,8 @@ To install requirements:
 ```setup
 pip install -r requirements.txt
 ```
+Dependency
+python3.6
 
 ## Training
 

@@ -2,7 +2,7 @@ from __future__ import print_function
 from data_loader.get_loader import get_dataset_information, get_loader
 import random
 from utils import utils as utils
-from models.basenet_v3 import *
+from models.basenet import *
 
 def main(args):
 

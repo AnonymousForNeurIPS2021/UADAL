@@ -12,6 +12,13 @@ To install requirements:
 pip install -r requirements.txt
 ```
 
+## Dataset
+
+Datasets should have the following structures:
+--data --office --amazon
+                --dslr
+                --webcam
+
 ## Training
 
 To train the model(s) in the paper, run this command:

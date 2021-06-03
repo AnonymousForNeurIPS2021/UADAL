@@ -13,19 +13,15 @@ import torch.optim as optim
 from torch.autograd import Variable
 from models.function import HLoss
 from models.function import BetaMixture1D
-from models.function import CrossEntropyLoss_v2 as CrossEntropyLoss
-from models.function import EntropyLoss_v2 as EntropyLoss
+from models.function import CrossEntropyLoss
+from models.function import EntropyLoss
 from models.basenet_v3 import *
 import copy
 from utils.utils import inverseDecayScheduler, CosineScheduler, StepScheduler
 import math
 
-def get_lr(optimizer):
-    for param_group in optimizer.param_groups:
-        return param_group['lr']
-
 class UAGRL():
-    def __init__(self, args, num_class, dataset_train, dataset_test, dataset_test_source, dataset_train_ss, dataset_train_st, len_s, len_t, class_list):
+    def __init__(self, args, num_class, dataset_train, dataset_test, dataset_train_ss):
         self.model = 'UADAL'  # Unknown-aware Domain adversarial learning
         self.args = args
         self.all_num_class = num_class
@@ -33,25 +29,17 @@ class UAGRL():
         self.dataset = args.dataset
         self.dataset_train = dataset_train
         self.dataset_test = dataset_test
-        self.dataset_test_source = dataset_test_source
         self.dataset_train_ss = dataset_train_ss
-        self.dataset_train_st = dataset_train_st#
-        self.len_s, self.len_t = len_s, len_t
-        self.max_iter = int(max(self.len_s, self.len_t) / self.args.batch_size) + 1
+
         self.device = self.args.device#torch.device("cuda")
 
         self.build_warmup()
-        self.fit_bmm_signal = False
 
-        self.train_type = 'warmup'
-        self.mixture_update_cnt = 0
-        self.dataset_train_tk, self.dataset_train_tu = None, None
         self.ent_criterion = HLoss()
 
         self.bmm_model = self.cont = self.k = 0
         self.bmm_model_maxLoss = torch.log(torch.FloatTensor([self.known_num_class])).to(self.device)
         self.bmm_model_minLoss = torch.FloatTensor([0.0]).to(self.device)
-        self.bmm_model_maxW = torch.FloatTensor([0.0]).to(self.device)
 
 
     def build_warmup(self):
@@ -59,8 +47,7 @@ class UAGRL():
             if isinstance(m, torch.nn.Linear):
                 torch.nn.init.zeros_(m.bias)
 
-        self.G, self.E = utils.get_model_warmup(self.args, unk_num_class=self.known_num_class,
-                                                             all_num_class=self.all_num_class, domain_dim=3)
+        self.G, self.E = utils.get_model_warmup(self.args, known_num_class=self.known_num_class)
         self.E.apply(weights_init_bias_zero)
         if self.args.cuda:
             self.G.to(self.args.device)
@@ -79,7 +66,7 @@ class UAGRL():
             if isinstance(m, torch.nn.Linear):
                 torch.nn.init.zeros_(m.bias)
 
-        _, self.C, self.E, self.DC = utils.get_model_main_v2(self.args, unk_num_class=self.known_num_class,
+        _, self.C, self.E, self.DC = utils.get_model_main(self.args, known_num_class=self.known_num_class,
                                                              all_num_class=self.all_num_class, domain_dim=3)
 
         self.E.apply(weights_init_bias_zero)
@@ -140,7 +127,7 @@ class UAGRL():
                 if step%len_train_source==0:
                     data_iter_s = iter(self.dataset_train_ss)
                 data = next(data_iter_s)
-                img_s, label_s, _, _, _, _ = data
+                img_s, label_s = data
 
                 img_s = Variable(img_s.to(self.args.device))
                 label_s = Variable(label_s.to(self.args.device))
@@ -160,10 +147,8 @@ class UAGRL():
             self.opt_w_g.zero_grad()
             self.opt_w_e.zero_grad()
 
-        self.train_type = 'main'
 
     def main_train(self):
-        print('main starts')
         step = 0
         while step < self.args.main_iter + 1:
             for batch_idx, data in enumerate(self.dataset_train):
@@ -178,7 +163,6 @@ class UAGRL():
                     img_s = Variable(img_s.to(self.args.device))
                     label_s = Variable(label_s.to(self.args.device))
                     img_t = Variable(img_t.to(self.args.device))
-                    label_t = Variable(label_t.to(self.args.device))
                 if len(img_s) < self.args.batch_size:
                     break
                 if len(img_t) < self.args.batch_size:
@@ -188,7 +172,7 @@ class UAGRL():
                     break
                 #########################################################################################################
                 out_t_free = self.E_freezed(self.G_freezed(img_t)).detach()
-                w_unk_posterior = self.compute_probabilities_batch(self.args, out_t_free, 1)
+                w_unk_posterior = self.compute_probabilities_batch(out_t_free, 1)
 
                 w_k_posterior = 1 - w_unk_posterior
                 w_k_posterior = w_k_posterior.to(self.args.device)
@@ -246,13 +230,13 @@ class UAGRL():
                     out_Ct = self.C(feat_t)
                     loss_cls_Ctu = alpha * CrossEntropyLoss(label=label_unknown_lsr, predict_prob=F.softmax(out_Ct, dim=1),
                                                     instance_level_weight=w_unk_posterior)
-                    loss_ent_Ctk =alpha * EntropyLoss(F.softmax(out_Ct, dim=1),
+                    loss_ent_Ctk = alpha * EntropyLoss(F.softmax(out_Ct, dim=1),
                                                instance_level_weight=w_k_posterior)
 
 
                     #########################################################################################################
 
-                    loss = 0.5 * loss_G + loss_cls_Es + loss_cls_Cs + loss_ent_Ctk + 0.5*loss_cls_Ctu
+                    loss = 0.5 * loss_G + loss_cls_Es + loss_cls_Cs + loss_ent_Ctk + float(1/11)*loss_cls_Ctu
                     loss.backward()
                     #########################################################################################################
                     self.opt_g.step()
@@ -265,7 +249,7 @@ class UAGRL():
 
                 if step % (self.args.report_term) == 0:
                     C_acc_os, C_acc_os_star, C_acc_unknown, C_acc_hos = self.test()
-                    print('|OS:%.4f |OS*:%.4f |UNK:%.4f |HOS:%.4f |'%(C_acc_os, C_acc_os_star, C_acc_unknown, C_acc_hos))
+                    print('(%4s/%4s) |OS:%.4f |OS*:%.4f |UNK:%.4f |HOS:%.4f |'%(step, self.args.main_iter,C_acc_os, C_acc_os_star, C_acc_unknown, C_acc_hos))
                     self.G.train()
                     self.C.train()
                     self.DC.train()
@@ -279,25 +263,17 @@ class UAGRL():
     def update_bmm_model(self):
         self.G.eval()
         self.E.eval()
-        all_ent_t, t_preds, t_labels = torch.Tensor([]), None, None
+        all_ent_t= torch.Tensor([])
         with torch.no_grad():
             for batch_idx, data in enumerate(self.dataset_test):
                 if self.args.cuda:
-                    img_t, label_t = data[0], data[1]
-                    img_t, label_t = Variable(img_t.to(self.args.device)), Variable(label_t.to(self.args.device))
+                    img_t = data[0]
+                    img_t = Variable(img_t.to(self.args.device))
                 feat = self.G(img_t)
                 out_t = self.E(feat)
                 ent_t = self.ent_criterion(out_t)
-                pred_t = out_t.data.max(1)[1]
                 all_ent_t = torch.cat((all_ent_t, ent_t.cpu()))
-                if t_labels is None:
-                    t_labels = label_t.cpu()
-                else:
-                    t_labels = torch.cat((t_labels, label_t.cpu()))
-                if t_preds is None:
-                    t_preds = pred_t.cpu()
-                else:
-                    t_preds = torch.cat((t_preds, pred_t.cpu()))
+
         entropy_list = all_ent_t.data.numpy()
         loss_tr_t = (entropy_list - self.bmm_model_minLoss.data.cpu().numpy()) / (
                 self.bmm_model_maxLoss.data.cpu().numpy() - self.bmm_model_minLoss.data.cpu().numpy() + 1e-6)
@@ -309,10 +285,7 @@ class UAGRL():
         self.bmm_model.fit(loss_tr_t)
         self.bmm_model.create_lookup(1)
 
-        self.mixture_update_cnt += 1
-
-
-    def compute_probabilities_batch(self, args, out_t, unk=1):
+    def compute_probabilities_batch(self, out_t, unk=1):
         ent_t = self.ent_criterion(out_t)
         batch_ent_t = (ent_t - self.bmm_model_minLoss) / (self.bmm_model_maxLoss - self.bmm_model_minLoss + 1e-6)
         batch_ent_t[batch_ent_t >= 1] = 1.0
@@ -329,11 +302,8 @@ class UAGRL():
     def test(self):
         self.G.eval()
         self.C.eval()
-        self.E.eval()
-        self.DC.eval()
 
         total_pred = np.array([])
-        total_label = np.array([])
         total_label_v2 = np.array([])
 
         with torch.no_grad():
@@ -350,10 +320,6 @@ class UAGRL():
 
                 label_t_numpy = label_t.cpu().numpy()
                 total_label_v2 = np.append(total_label_v2, label_t_numpy)
-
-                label_t_numpy[label_t_numpy >= self.known_num_class]=self.known_num_class
-                total_label = np.append(total_label, label_t_numpy)
-
 
         max_target_label = int(np.max(total_label_v2)+1)
         m = utils.extended_confusion_matrix(total_label_v2, total_pred, true_labels=list(range(max_target_label)), pred_labels=list(range(self.all_num_class)))

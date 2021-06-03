@@ -3,32 +3,12 @@ from torchvision import models
 import torch.nn.functional as F
 import torch.nn as nn
 from torch.autograd import Function
-from models.function import ReverseLayerF, WeightedForwardLayerF
 import numpy as np
 from torch.autograd.variable import *
-
-
-class GradReverse(torch.autograd.Function):
-    # def __init__(self, lambd):
-    #     self.lambd = lambd
-    @staticmethod
-    def forward(ctx, x):
-        return x.view_as(x)
-    @staticmethod
-    def backward(ctx, grad_output):
-        #return (grad_output * -self.lambd)
-        return (grad_output.neg())
-def grad_reverse(x):
-    return GradReverse.apply(x)
-
-class Flatten(nn.Module):
-    def forward(self, input):
-        return input.view(input.size(0), -1)
 
 class BaseFeatureExtractor(nn.Module):
     def forward(self, *input):
         pass
-
     def __init__(self):
         super(BaseFeatureExtractor, self).__init__()
     def output_num(self):
@@ -137,7 +117,7 @@ class VGGFc(BaseFeatureExtractor):
 
 
 class ResNet_CLS(nn.Module):
-    def __init__(self, in_dim, out_dim, bottle_neck_dim):
+    def __init__(self, in_dim, out_dim):
         super(ResNet_CLS, self).__init__()
         self.fc = nn.Linear(in_dim, out_dim)
         self.main = nn.Sequential(
@@ -164,7 +144,7 @@ class ResNet_CLS_C(nn.Module):
 
 
 class ResNet_DC(nn.Module):
-    def __init__(self, in_dim, out_dim, bottle_neck_dim):
+    def __init__(self, in_dim, out_dim):
         super(ResNet_DC, self).__init__()
 
         self.fc = nn.Linear(in_dim, out_dim)
@@ -172,12 +152,8 @@ class ResNet_DC(nn.Module):
             self.fc,
         )
 
-    def forward(self, x, alpha=1.0, reverse=False):
-        if reverse:
-            x = ReverseLayerF.apply(x, alpha)
-        else:
-            x = WeightedForwardLayerF.apply(x, alpha)
+    def forward(self, x):
         for module in self.main.children():
             x = module(x)
-        return x#, out
+        return x
 

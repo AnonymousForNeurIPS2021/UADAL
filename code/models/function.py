@@ -6,25 +6,7 @@ import scipy.stats as stats
 from scipy.special import beta as beta_f
 
 from torch.autograd import Function
-class ReverseLayerF(Function):
-    @staticmethod
-    def forward(ctx, x, alpha):
-        ctx.alpha = alpha
-        return x.view_as(x)
-    @staticmethod
-    def backward(ctx, grad_output):
-        output = grad_output.neg() * ctx.alpha
-        return output, None
 
-class WeightedForwardLayerF(Function):
-    @staticmethod
-    def forward(ctx, x, beta):
-        ctx.beta = beta
-        return x.view_as(x)
-    @staticmethod
-    def backward(ctx, grad_output):
-        output = grad_output * ctx.beta
-        return output, None
 
 class HLoss(nn.Module):
     def __init__(self):
@@ -72,7 +54,6 @@ class BetaMixture1D(object):
 
     def responsibilities(self, x):
         r =  np.array([self.weighted_likelihood(x, i) for i in range(2)])
-        # there are ~200 samples below that value
         r[r <= self.eps_nan] = self.eps_nan
         r /= r.sum(axis=0)
         return r
@@ -82,9 +63,8 @@ class BetaMixture1D(object):
 
     def fit(self, x):
         x = np.copy(x)
-        # EM on beta distributions unsable with x == 0 or 1
         eps = 1e-4
-        #######################################retrun at v17.py#########################################################
+        ###############################################################################
         x[x >= 1 - eps] = 1 - eps
         x[x <= eps] = eps
         ################################################################################################################
@@ -106,7 +86,7 @@ class BetaMixture1D(object):
         lookup_t = self.posterior(x_l, y)
         lookup_t[np.argmax(lookup_t):] = lookup_t.max()
         self.lookup = lookup_t
-        self.lookup_loss = x_l # I do not use this one at the end
+        self.lookup_loss = x_l
 
     def look_lookup(self, x, loss_max, loss_min, testing=False):
         if testing:
@@ -140,8 +120,7 @@ class BetaMixture1D(object):
         return self.criteria
 
 
-def CrossEntropyLoss_v2(label, predict_prob, class_level_weight=None, instance_level_weight=None, epsilon=1e-12):
-    #label = nn.functional.one_hot(label,num_classes=num_class)
+def CrossEntropyLoss(label, predict_prob, class_level_weight=None, instance_level_weight=None, epsilon=1e-12):
     N, C = label.size()
     N_, C_ = predict_prob.size()
 
@@ -167,33 +146,7 @@ def CrossEntropyLoss_v2(label, predict_prob, class_level_weight=None, instance_l
     return torch.sum(instance_level_weight * ce * class_level_weight) / float(instance_normalize)
 
 
-
-def BCELossForMultiClassification(label, predict_prob, class_level_weight=None, instance_level_weight=None,
-                                  epsilon=1e-12):
-    N, C = label.size()
-    N_, C_ = predict_prob.size()
-
-    assert N == N_ and C == C_, 'fatal error: dimension mismatch!'
-
-    if class_level_weight is None:
-        class_level_weight = 1.0
-    else:
-        if len(class_level_weight.size()) == 1:
-            class_level_weight = class_level_weight.view(1, class_level_weight.size(0))
-        assert class_level_weight.size(1) == C, 'fatal error: dimension mismatch!'
-
-    if instance_level_weight is None:
-        instance_level_weight = 1.0
-    else:
-        if len(instance_level_weight.size()) == 1:
-            instance_level_weight = instance_level_weight.view(instance_level_weight.size(0), 1)
-        assert instance_level_weight.size(0) == N, 'fatal error: dimension mismatch!'
-
-    bce = -label * torch.log(predict_prob + epsilon) - (1.0 - label) * torch.log(1.0 - predict_prob + epsilon)
-    return torch.sum(instance_level_weight * bce * class_level_weight) / float(N)
-
-
-def EntropyLoss_v2(predict_prob, class_level_weight=None, instance_level_weight=None, epsilon=1e-20):
+def EntropyLoss(predict_prob, class_level_weight=None, instance_level_weight=None, epsilon=1e-20):
     N, C = predict_prob.size()
 
     if class_level_weight is None:

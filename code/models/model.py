@@ -15,7 +15,7 @@ from models.function import HLoss
 from models.function import BetaMixture1D
 from models.function import CrossEntropyLoss
 from models.function import EntropyLoss
-from models.basenet_v3 import *
+from models.basenet import *
 import copy
 from utils.utils import inverseDecayScheduler, CosineScheduler, StepScheduler
 import math

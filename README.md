@@ -28,5 +28,5 @@ Our model achieves the following performance on Open-Set Domain Adaptation Setti
 | ------------------ |---------------- | -------------- |---------------- | -------------- |
 | UADAL  |     85%         |      95%       | 85%         |      95%       |
 
-# The metric is HOS.
+- The metric is HOS.
 

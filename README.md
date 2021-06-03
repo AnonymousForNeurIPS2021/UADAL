@@ -47,7 +47,7 @@ After downloading the datasets, please run python3.6 utils/list_office.py
 To train the model(s) in the paper, run this command:
 
 ```train
-python train.py --input-data <path_to_data> --alpha 10 --beta 20
+bash scripts/run_office31_resnet.sh
 ```
 
 ## Results
